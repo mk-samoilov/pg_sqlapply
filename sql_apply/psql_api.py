@@ -52,11 +52,11 @@ def _execute_cl_command(cmd: str) -> tuple[str, str, str, int]:
 
 
 def gen_login_url(db_conf: dict) -> str:
-    return f"postgresql://{quote(db_conf.get('username', 'postgres'))}" + \
+    return f"postgresql://{quote(db_conf.get('user', 'postgres'))}" + \
         f"{':' + quote(db_conf['password']) if db_conf.get('password') else ''}" + \
         f"@{quote(db_conf['host'])}" + \
         f"{':' + db_conf['port'] if db_conf.get('port') else ''}/{quote(db_conf.get('dbname', ''))}"
-    # postgresql://username:password@host:port/dbname
+    # postgresql://user:password@host:port/dbname
 
 
 def execute_sql_string(db_conf: dict, args: str, sql_request: str):
@@ -67,4 +67,5 @@ def execute_sql_string(db_conf: dict, args: str, sql_request: str):
 
 def execute_sql_file(db_conf: dict, args: str, src_path: str):
     cmd = f"psql {gen_login_url(db_conf=db_conf)} {args} -f {str(src_path)}"
+
     return _execute_cl_command(cmd=cmd)

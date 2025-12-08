@@ -1,7 +1,7 @@
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = 'sqlapply') THEN
-        EXECUTE 'CREATE SCHEMA sqlapply AUTHORIZATION postgres';
+        EXECUTE 'CREATE SCHEMA sqlapply AUTHORIZATION ' || quote_ident(current_user);
         RAISE NOTICE 'Schema sqlapply created.';
     ELSE
         RAISE NOTICE 'Schema sqlapply already exists.';
@@ -62,4 +62,4 @@ BEGIN
 END
 $$;
 
-ALTER TABLE IF EXISTS sqlapply.sqlapply_history OWNER TO postgres;
+ALTER TABLE IF EXISTS sqlapply.sqlapply_history OWNER TO current_user;

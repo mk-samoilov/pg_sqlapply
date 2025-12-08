@@ -28,7 +28,7 @@ def starter():
     show_check_group.add_argument(
         "-c", "--check",
         action="store_true",
-        help="Check executing (e.g. to make sure before rolling out a release, etc.)"
+        help="Check executing (e.g. to make sure before rolling out a release)"
     )
 
     parser.add_argument(
