@@ -19,6 +19,12 @@ def starter():
         help="Initialize database (for working tool on target db)"
     )
 
+    # parser.add_argument(
+    #     "-e", "--export-history",
+    #     action="store_true",
+    #     help="Export history of changes as cvs table"
+    # )
+
     show_check_group = parser.add_mutually_exclusive_group()
     show_check_group.add_argument(
         "-s", "--show",

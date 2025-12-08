@@ -541,7 +541,8 @@ class SQLApplyTool:
             {
                 "init": "_init_dbs_cli",
                 "show": "_show_change_cli",
-                "check": "_check_change_cli"
+                "check": "_check_change_cli",
+                "export-history": "_export_history_as_cvs",
             }
 
         for arg, handler in args_map.items():
