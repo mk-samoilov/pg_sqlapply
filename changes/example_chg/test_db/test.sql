@@ -1,0 +1,2 @@
+SELECT 345;
+SELECT aaa;
