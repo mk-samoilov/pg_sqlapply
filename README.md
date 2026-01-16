@@ -17,7 +17,7 @@ cd pg_sqlapply
 
 ## Configuration
 
-Init tool:
+Init tool for create config template:
 ```
 python3 -m sql_apply
 ```
