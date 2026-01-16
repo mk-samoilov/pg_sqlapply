@@ -119,7 +119,7 @@ class SQLApplyTool:
             db_conf["port"] = db_conf.get("port", "5432")
             db_conf["user"] = db_conf.get("user", "postgres")
             db_conf["password"] = db_conf.get("password", "")
-            db_conf["dbname"] = db_conf.get("dbname", dbname)
+            db_conf["dbname"] = db_conf.get("dbname") or dbname
 
             if not db_conf["port"].isdigit():
                 logging.critical(f"(Database '{db_conf['dbname']}') Port must be an integer")
@@ -210,7 +210,7 @@ class SQLApplyTool:
 
     def _get_src_hash(self, db_conf: dict, script_name: str, chg_name: str) -> str | None:
         sql = format_str(
-            string=open(file=self.conf["DEFAULT"]["core_dir"] + "/scripts/get_sqla_history.sql", mode="r").read(),
+            string=open(file=self.conf["DEFAULT"]["core_dir"] + "/scripts/get_src_hash.sql", mode="r").read(),
             repl_pairs=[
                 ("%chg_name", chg_name),
                 ("%script_name", script_name)
@@ -476,10 +476,17 @@ class SQLApplyTool:
         )
 
         not_init_err_str = "does not exist"
-        connect_err_str = "psql: error: connection to server at"
+        connect_err_strs = [
+            "psql: error: connection to server at",
+            "psql: error: connection to server on socket",
+            "FATAL:  Peer authentication failed",
+            "FATAL:  password authentication failed",
+            "FATAL:  role",
+            "FATAL:  database"
+        ]
 
         if ow_resp_sys_r[3] != 0:
-            if connect_err_str in ow_resp_sys_r[2]:
+            if any(err in ow_resp_sys_r[2] for err in connect_err_strs):
                 logging.critical(
                     f"Connection error of db '{db_name if db_name else db_conf['dbname']}'" + \
                     f" ({db_conf['host']}:{db_conf['port']})")

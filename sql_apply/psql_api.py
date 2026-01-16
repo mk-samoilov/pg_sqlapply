@@ -52,11 +52,32 @@ def _execute_cl_command(cmd: str) -> tuple[str, str, str, int]:
 
 
 def gen_login_url(db_conf: dict) -> str:
-    return f"postgresql://{quote(db_conf.get('user', 'postgres'))}" + \
-        f"{':' + quote(db_conf['password']) if db_conf.get('password') else ''}" + \
-        f"@{quote(db_conf['host'])}" + \
-        f"{':' + db_conf['port'] if db_conf.get('port') else ''}/{quote(db_conf.get('dbname', ''))}"
-    # postgresql://user:password@host:port/dbname
+    host = db_conf.get('host', '')
+    user = db_conf.get('user', 'postgres')
+    password = db_conf.get('password', '')
+    port = db_conf.get('port', '')
+    dbname = db_conf.get('dbname', '')
+
+    # Use Unix socket if host is empty or "local"
+    if not host or host.lower() == 'local':
+        # postgresql:///dbname?user=username
+        url = f"postgresql:///{quote(dbname)}"
+        params = [f"user={quote(user)}"]
+        if password:
+            params.append(f"password={quote(password)}")
+        if params:
+            url += "?" + "&".join(params)
+        return url
+
+    # TCP/IP connection: postgresql://user:password@host:port/dbname
+    url = f"postgresql://{quote(user)}"
+    if password:
+        url += f":{quote(password)}"
+    url += f"@{quote(host)}"
+    if port:
+        url += f":{port}"
+    url += f"/{quote(dbname)}"
+    return url
 
 
 def execute_sql_string(db_conf: dict, args: str, sql_request: str):

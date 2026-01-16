@@ -17,12 +17,12 @@ def load_config(config_path="config.ini"):
             "changes_dir": str(Path(__file__).resolve().parent.parent) + "/changes"
         }
 
-        config["example_database"] = {
+        config["test_db"] = {
             "host": "localhost",
-            "port": 5432,
-            "user": "postgres",
-            "password": "",
-            "dbname": ""
+            "port": "5432",
+            "user": "test_usr",
+            "password": "test_usr",
+            "dbname": "test_db"
         }
 
         try:
