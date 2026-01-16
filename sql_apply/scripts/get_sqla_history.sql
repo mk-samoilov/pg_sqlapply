@@ -1,0 +1,1 @@
+SELECT * FROM sqlapply.sqlapply_history;

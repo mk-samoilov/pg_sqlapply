@@ -69,7 +69,7 @@ class SQLApplyTool:
             3: "SCRIPT_ERROR"
         }
 
-    BASE_CONFIIG = str(pathlib.Path(__file__).resolve().parent) + "/sql_apply.conf"
+    BASE_CONFIIG = str(pathlib.Path(__file__).resolve().parent.parent) + "/sql_apply.conf"
 
     def __init__(self, conf_file: str | None):
         self.conf = load_config(str(conf_file) if conf_file else self.BASE_CONFIIG)
@@ -79,8 +79,8 @@ class SQLApplyTool:
         self.__setup_logging__()
 
     def __setup_logging__(self):
-        os.makedirs(self.conf['DEFAULT']['logs_dir'], exist_ok=True)
-        os.makedirs(self.conf['DEFAULT']['logs_dir'] + "/execution_logs", exist_ok=True)
+        os.makedirs(self.conf["DEFAULT"]["logs_dir"], exist_ok=True)
+        os.makedirs(self.conf["DEFAULT"]["logs_dir"] + "/execution_logs", exist_ok=True)
         log_filename = f"{self.conf['DEFAULT']['logs_dir']}/log_{datetime.now().strftime('%Y-%m-%d')}.log"
 
         logging.basicConfig(
@@ -96,7 +96,7 @@ class SQLApplyTool:
         dff = format_str(repl_pairs=[("/", "_")], string=script_name)
 
         filename = f"{dbname}_{chg_name}_{dff}.log"
-        logfile_full_path = self.conf['DEFAULT']['logs_dir'] + f"/execution_logs/{filename}"
+        logfile_full_path = self.conf["DEFAULT"]["logs_dir"] + f"/execution_logs/{filename}"
 
         log = f"-- LOG OF {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n{log}\n"
 
@@ -162,7 +162,7 @@ class SQLApplyTool:
         db_conf = self._get_db_conf(dbname=db_name)
         self._check_db(db_conf=db_conf, checking_init=False)
 
-        src = str(pathlib.Path(__file__).resolve().parent) + "/sql/init.sql"
+        src = str(pathlib.Path(__file__).resolve().parent) + "/scripts/init_sqlapply_schema.sql"
 
         logging.info(f"Initialize database '{db_name}'")
 
@@ -185,13 +185,15 @@ class SQLApplyTool:
 
             [logging.error(err) for err in response[1].split("\n") if err != "" and err in init_notices_list]
 
-    @staticmethod
-    def _is_src_already_applied(db_conf: dict, change_name: str, script_file: str) -> int:
-        sql = f"""
-            SELECT status FROM sqlapply.sqlapply_history
-            WHERE change_name = '{change_name}' AND script_file = '{script_file}'
-            LIMIT 1;
-        """
+    def _is_src_already_applied(self, db_conf: dict, change_name: str, script_file: str) -> int:
+        sql = format_str(
+            string=open(file=self.conf["DEFAULT"]["core_dir"] + "/scripts/get_status_sqla_rec.sql", mode="r").read(),
+            repl_pairs=[
+                ("%change_name", change_name),
+                ("%script_file", script_file)
+            ]
+        )
+
         response = execute_sql_string(db_conf=db_conf, args="-t -A", sql_request=sql)
         stdout, stderr, _, return_code = response[0], response[1], response[2], response[3]
 
@@ -206,13 +208,15 @@ class SQLApplyTool:
             case "EXECUTION_STOPPED": return 4
             case _: return 2
 
-    @staticmethod
-    def _get_src_hash(db_conf: dict, script_name: str, chg_name: str) -> str | None:
-        sql = f"""
-            SELECT src_checksum FROM sqlapply.sqlapply_history
-            WHERE change_name = '{chg_name}' AND script_file = '{script_name}'
-            LIMIT 1;
-        """
+    def _get_src_hash(self, db_conf: dict, script_name: str, chg_name: str) -> str | None:
+        sql = format_str(
+            string=open(file=self.conf["DEFAULT"]["core_dir"] + "/scripts/get_sqla_history.sql", mode="r").read(),
+            repl_pairs=[
+                ("%chg_name", chg_name),
+                ("%script_name", script_name)
+            ]
+        )
+
         response = execute_sql_string(db_conf=db_conf, args="-t -A", sql_request=sql)
         stdout, stderr, _, return_code = response
 
@@ -461,7 +465,7 @@ class SQLApplyTool:
                 logging.info("Executing change completed")
 
     def _check_db(self, db_conf, db_name: str|None = None, checking_init: bool = True):
-        sql = "SELECT * FROM sqlapply.sqlapply_history;"
+        sql = open(file=self.conf["DEFAULT"]["core_dir"] + "/scripts/get_sqla_history.sql", mode="r").read()
 
         formated_sql = " ".join(sql.split()).strip()
 
@@ -488,7 +492,7 @@ class SQLApplyTool:
                 sys.exit(1)
 
     def _insert_history_record(self, change_name: str, script: Tuple, db_conf):
-        insert_sql = open(file=self.conf["DEFAULT"]["core_dir"] + "/sql/insert_t.sql", mode="r").read()
+        insert_sql = open(file=self.conf["DEFAULT"]["core_dir"] + "/scripts/insert_sqla_rec.sql", mode="r").read()
 
         formated_insert_sql = " ".join(format_str(
             string=insert_sql,
@@ -514,7 +518,7 @@ class SQLApplyTool:
 
     def _update_history_record(self, change_name: str, script: Tuple, exit_stat_str: str, db_conf,
                                hash_: str):
-        insert_sql = open(file=self.conf["DEFAULT"]["core_dir"] + "/sql/update_t.sql", mode="r").read()
+        insert_sql = open(file=self.conf["DEFAULT"]["core_dir"] + "/scripts/update_sqla_rec.sql", mode="r").read()
 
         formated_insert_sql = " ".join(format_str(
             string=insert_sql,
