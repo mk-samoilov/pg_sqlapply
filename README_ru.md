@@ -19,20 +19,20 @@ cd pg_sqlapply
 
 Инициализация для создания шаблона конфига:
 ```
-python3 -m sql_apply
+python3 -m sqlapply
 ```
 
-Настройте `sql_apply.conf`:
+Настройте `sqlapply.conf`:
 
 ```ini
 [DEFAULT]
 logging_level = INFO
 
 [my_database]
-host = localhost          # или "local" для Unix-сокета
+host = localhost
 port = 5432
 user = myuser
-password = mypassword     # можно оставить пустым для peer-аутентификации
+password = mypassword
 dbname = mydb
 ```
 
@@ -48,7 +48,7 @@ password = mypassword
 **Unix-сокет (peer-аутентификация, без пароля):**
 ```ini
 host = local
-user = mk                 # должен совпадать с системным пользователем
+user = mk
 password =
 ```
 
@@ -56,8 +56,8 @@ password =
 
 ```
 changes/
-└── <имя_ченжсета>/          # Имя ченжсета (релиза)
-    └── <секция_бд>/         # Имя секции из конфига
+└── <имя_ченжсета>/
+    └── <секция_бд>/
         ├── 01_schema.sql
         ├── 02_data.sql
         └── 03_indexes.sql
@@ -72,90 +72,73 @@ changes/
 Создаёт схему `sqlapply` для хранения истории выполнения:
 
 ```bash
-# Инициализация конкретной базы данных
-python3 -m sql_apply --init --dbname my_database
+python3 -m sqlapply --init --dbname my_database
 
-# Или инициализация всех баз из ченжсета
-python3 -m sql_apply my_release --init
+python3 -m sqlapply my_release --init
 ```
 
 ### Просмотр структуры ченжсета
 
 ```bash
-python3 -m sql_apply my_release --show
+python3 -m sqlapply my_release --show
 ```
 
 ### Проверка перед выполнением (dry-run)
 
 ```bash
-python3 -m sql_apply my_release --check
+python3 -m sqlapply my_release --check
 ```
 
 ### Выполнение ченжсета
 
 ```bash
-# Выполнить все скрипты
-python3 -m sql_apply my_release
+python3 -m sqlapply my_release
 
-# Только для конкретной базы данных
-python3 -m sql_apply my_release --dbname my_database
+python3 -m sqlapply my_release --dbname my_database
 
-# С фильтром по шаблону
-python3 -m sql_apply my_release --pattern "01_*.sql"
+python3 -m sqlapply my_release --pattern "01_*.sql"
 ```
 
 ### Повторное выполнение (force)
 
 ```bash
-# Перевыполнить все скрипты
-python3 -m sql_apply my_release --force ALL
+python3 -m sqlapply my_release --force ALL
 
-# Перевыполнить только упавшие скрипты
-python3 -m sql_apply my_release --force ERROR
+python3 -m sqlapply my_release --force ERROR
 
-# Перевыполнить изменённые скрипты (по MD5)
-python3 -m sql_apply my_release --force MD5DIFF
+python3 -m sqlapply my_release --force MD5DIFF
 ```
 
 ### Режимы выполнения
 
 ```bash
-# Одна транзакция, откат при ошибке (по умолчанию)
-python3 -m sql_apply my_release --mode single-transaction
+python3 -m sqlapply my_release --mode single-transaction
 
-# Остановка при ошибке, без отката
-python3 -m sql_apply my_release --mode on-error-stop
+python3 -m sqlapply my_release --mode on-error-stop
 ```
 
 ### Свой конфиг-файл
 
 ```bash
-python3 -m sql_apply my_release -C /path/to/custom.conf
+python3 -m sqlapply my_release -C /path/to/custom.conf
 ```
 
 ## Логи
 
 - Общие логи: `logs/log_YYYY-MM-DD.log`
-- Логи выполнения скриптов: `logs/execution_logs/<db>_<change>_<script>.log`
+- Логи выполнения скриптов: `logs/execution_logs/<db>_<change>_<script>.log` + в скрипте разделение по запускам
 
 ## Пример работы
 
 ```bash
-# 1. Создать структуру
 mkdir -p changes/release_v1/production_db
 
-# 2. Добавить скрипты
 echo "CREATE TABLE users (id SERIAL PRIMARY KEY);" > changes/release_v1/production_db/01_users.sql
 echo "INSERT INTO users DEFAULT VALUES;" > changes/release_v1/production_db/02_seed.sql
 
-# 3. Настроить (добавить секцию [production_db] в конфиг)
+python3 -m sqlapply release_v1 --init
 
-# 4. Инициализировать базу данных
-python3 -m sql_apply release_v1 --init
+python3 -m sqlapply release_v1 --check
 
-# 5. Проверить
-python3 -m sql_apply release_v1 --check
-
-# 6. Выполнить
-python3 -m sql_apply release_v1
+python3 -m sqlapply release_v1
 ```
