@@ -2,6 +2,10 @@
 
 A tool for managing migrations and versioning SQL scripts in PostgreSQL.
 
+### Documentation translations
+- [English](README.md)
+- [Russian](README_ru.md)
+
 ## Requirements
 
 - Python 3.10+
@@ -142,3 +146,4 @@ python3 -m sqlapply release_v1 --check
 
 python3 -m sqlapply release_v1
 ```
+
